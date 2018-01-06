@@ -1,9 +1,9 @@
 extern crate iron;
-extern crate rscam;
 extern crate serde;
-extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
+extern crate rscam;
 
 use iron::prelude::*;
 use iron::Handler;
@@ -11,6 +11,9 @@ use iron::Handler;
 use rscam::Camera;
 
 use std::fmt::{self, Debug};
+
+mod camera;
+use camera::AsCameraResponse;
 
 #[derive(Debug)]
 struct StringError(String);
@@ -25,13 +28,6 @@ impl ::std::error::Error for StringError {
     fn description(&self) -> &str { &*self.0 }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct CameraResponse<'a> {
-    res: (u32, u32),
-    enc: [u8; 4],
-    buff: &'a [u8],
-}
-
 struct CameraHandler {
     camera: Camera
 }
@@ -39,6 +35,19 @@ struct CameraHandler {
 impl CameraHandler {
     fn new() -> CameraHandler {
         let mut camera = rscam::new("/dev/video0").unwrap();
+
+
+        for i in camera.formats() {
+            if let Ok(r) = i {
+                println!("for {:?}", r);
+
+                if let Ok(r) = camera.resolutions(&r.format) {
+                    println!("res {:?}", r);
+                } else {
+                    println!("Cannot get resolutions");
+                }
+            }
+        }
 
         camera.start(&rscam::Config {
             interval: (1, 30),      // 30 fps.
@@ -54,18 +63,14 @@ impl CameraHandler {
 
 impl Handler for CameraHandler {
     fn handle(&self, _: &mut Request) -> IronResult<Response> {
-        if let Ok(frame) = self.camera.capture() {
-            use std::ops::Deref;
-            let resp = CameraResponse { res: frame.resolution, enc: frame.format, buff: frame.deref() };
-
-            if let Ok(r) = serde_json::to_string(&resp) {
-                Ok(Response::with((iron::status::Ok, r)))
-            } else {
-                Err(IronError::new(StringError("Cannot serialize to JSON".to_string()), iron::status::TooManyRequests))
-            }
-        } else {
-            Err(IronError::new(StringError("Cannot read frame".to_string()), iron::status::TooManyRequests))
-        }
+        self.camera
+            .capture()
+            .or(Err(IronError::new(StringError("Cannot read frame".to_string()), iron::status::TooManyRequests)))
+            .and_then(|frame|
+                frame.as_camera_response()
+                    .to_string()
+                    .or(Err(IronError::new(StringError("Cannot read frame".to_string()), iron::status::TooManyRequests)))
+                    .and_then(|json_value| Ok(Response::with((iron::status::Ok, json_value)))))
     }
 }
 
