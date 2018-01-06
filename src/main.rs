@@ -9,6 +9,7 @@ use iron::prelude::*;
 use iron::Handler;
 
 use rscam::Camera;
+use rscam::Frame;
 
 use std::fmt::{self, Debug};
 
@@ -28,12 +29,12 @@ impl ::std::error::Error for StringError {
     fn description(&self) -> &str { &*self.0 }
 }
 
-struct CameraHandler {
+struct CameraWrapper {
     camera: Camera
 }
 
-impl CameraHandler {
-    fn new() -> CameraHandler {
+impl CameraWrapper {
+    fn new() -> CameraWrapper {
         let mut camera = rscam::new("/dev/video0").unwrap();
 
 
@@ -57,7 +58,21 @@ impl CameraHandler {
         }).unwrap();
 
 
-        CameraHandler { camera }
+        CameraWrapper { camera }
+    }
+
+    fn capture(&self) -> ::std::io::Result<Frame>{
+        self.camera.capture()
+    }
+}
+
+struct CameraHandler {
+    camera: CameraWrapper
+}
+
+impl CameraHandler {
+    fn new(camera : CameraWrapper) -> CameraHandler {
+        CameraHandler{camera}
     }
 }
 
@@ -75,7 +90,7 @@ impl Handler for CameraHandler {
 }
 
 fn main() {
-    let chain = Chain::new(CameraHandler::new());
+    let chain = Chain::new(CameraHandler::new(CameraWrapper::new()));
     Iron::new(chain).http("0.0.0.0:3000").unwrap();
 }
 
