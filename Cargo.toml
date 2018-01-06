@@ -1,0 +1,11 @@
+[package]
+name = "image_server"
+version = "0.1.0"
+authors = ["treere"]
+
+[dependencies]
+iron = "0.6.0"
+rscam = "0.5.3"
+serde = "1.0.27"
+serde_json = "1.0.9"
+serde_derive = "1.0.27"
