@@ -1,39 +1,54 @@
 extern crate rscam;
-use rscam::{Camera,Frame};
+use self::rscam::{Camera,Frame};
+use std::fmt::Formatter;
 
-pub struct CameraWrapper {
+/// The Error of the camera
+pub struct V4l2Error {
+    pub description : String
+}
+
+impl ::std::fmt::Debug for V4l2Error {
+    fn fmt(&self, f: &mut Formatter) -> ::std::fmt::Result {
+        write!(f, "({:?})", self.description)
+    }
+}
+
+/// Wrapper to rscam
+pub struct V4l2Camera {
     camera: Camera
 }
 
-impl CameraWrapper {
-    pub fn new() -> CameraWrapper {
-        let mut camera = rscam::new("/dev/video0").unwrap();
+impl V4l2Camera {
 
+    /// Create a new V4l2Camera.
+    ///
+    /// The camera, interval and resolution is hard-coded.
+    pub fn new(camera_name :&str) -> Result<V4l2Camera,V4l2Error> {
 
-        for i in camera.formats() {
-            if let Ok(r) = i {
-                println!("for {:?}", r);
-
-                if let Ok(r) = camera.resolutions(&r.format) {
-                    println!("res {:?}", r);
-                } else {
-                    println!("Cannot get resolutions");
-                }
-            }
+        // Read the camera file.
+        let camera = rscam::new(camera_name);
+        if camera.is_err() {
+            return Err(V4l2Error{description:"Cannot open camera".to_string()});
         }
+        let mut camera = camera.unwrap();
 
-        camera.start(&rscam::Config {
+        // Start the camera.
+        let can_start = camera.start(&rscam::Config {
             interval: (1, 30),      // 30 fps.
             resolution: (640, 480),
             format: b"YUYV",
             ..Default::default()
-        }).unwrap();
+        });
+        if can_start.is_err() {
+            return Err(V4l2Error{description:"Cannot start camera".to_string()});
+        }
 
-
-        CameraWrapper { camera }
+        // Return the camera.
+        Ok(V4l2Camera { camera })
     }
 
-    pub fn capture(&self) -> ::std::io::Result<Frame>{
-        self.camera.capture()
+    /// Capture a frame
+    pub fn capture(&self) -> Result<Frame,V4l2Error>{
+        self.camera.capture().or(Err(V4l2Error{description:"Cannot capture frame".to_string()}))
     }
 }

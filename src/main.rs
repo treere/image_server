@@ -3,16 +3,18 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-extern crate rscam;
 
 use iron::prelude::*;
 
 mod camera;
-use camera::CameraWrapper;
+use camera::V4l2Camera;
 use camera::CameraHandler;
 
 
 fn main() {
-    let chain = Chain::new(CameraHandler::new(CameraWrapper::new()));
+
+    let cam = V4l2Camera::new("/dev/video0").unwrap();
+
+    let chain = Chain::new(CameraHandler::new(cam));
     Iron::new(chain).http("0.0.0.0:3000").unwrap();
 }

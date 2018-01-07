@@ -1,10 +1,9 @@
 
 mod response;
 pub use self::response::CameraResponse;
-pub use self::response::AsCameraResponse;
 
 mod wrapper;
-pub use self::wrapper::CameraWrapper;
+pub use self::wrapper::V4l2Camera;
 
 mod handler;
 pub use self::handler::CameraHandler;
