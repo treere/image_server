@@ -2,6 +2,9 @@ extern crate rscam;
 use self::rscam::{Camera,Frame};
 use std::fmt::Formatter;
 
+
+use super::CameraConfiguration;
+
 /// The Error of the camera
 pub struct V4l2Error {
     pub description : String
@@ -23,10 +26,10 @@ impl V4l2Camera {
     /// Create a new V4l2Camera.
     ///
     /// The camera, interval and resolution is hard-coded.
-    pub fn new(camera_name :&str) -> Result<V4l2Camera,V4l2Error> {
+    pub fn new(conf : CameraConfiguration) -> Result<V4l2Camera,V4l2Error> {
 
         // Read the camera file.
-        let camera = rscam::new(camera_name);
+        let camera = rscam::new(conf.device.as_ref());
         if camera.is_err() {
             return Err(V4l2Error{description:"Cannot open camera".to_string()});
         }
@@ -34,9 +37,9 @@ impl V4l2Camera {
 
         // Start the camera.
         let can_start = camera.start(&rscam::Config {
-            interval: (1, 30),      // 30 fps.
-            resolution: (640, 480),
-            format: b"YUYV",
+            interval: conf.interval,
+            resolution: conf.resolution,
+            format :&conf.format,
             ..Default::default()
         });
         if can_start.is_err() {

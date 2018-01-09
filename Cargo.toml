@@ -5,7 +5,7 @@ authors = ["treere"]
 
 [dependencies]
 iron = "0.6.0"
-rscam = "0.5.3"
+rscam = {version = "0.5.3", features = ["no_wrapper"]}
 serde = "1.0.27"
 serde_json = "1.0.9"
 serde_derive = "1.0.27"
