@@ -1,0 +1,19 @@
+name: image_server
+version: "0.1"
+author: Andrea Tomasi <tomasiandrea.at@gmail.com>
+about: Creeate an http server that send json images.
+args:
+    - port:
+        short: p
+        long: port
+        value_name: PORT
+        help: Set the server port
+        takes_value: true
+        default_value: '3000'
+    - format:
+        short: f
+        long: format
+        value_name: FORMAT
+        help: Image format.
+        takes_value: true
+        default_value: 'YUYV'
