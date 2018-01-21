@@ -19,7 +19,6 @@ fn main() {
     let mut file = File::create("/tmp/foo.txt").unwrap();
     file.write_all(&conf.as_bytes()).unwrap();
 
-
     let conf = {
         let mut file = File::open("/tmp/foo.txt").unwrap();
         let mut content = String::default();
