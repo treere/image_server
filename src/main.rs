@@ -9,12 +9,9 @@ extern crate serde_json;
 use iron::prelude::*;
 
 mod camera;
-use camera::V4l2Camera;
-use camera::CameraHandler;
-use camera::CameraConfiguration;
+use camera::{V4l2Camera,CameraHandler,CameraConfiguration};
 use std::fs::File;
-use std::io::Write;
-use std::io::Read;
+use std::io::{Write,Read};
 
 fn main() {
     let conf = r#"{"interval":[1,30],"resolution":[640,480],"format":[89,85,89,86]}"#;
